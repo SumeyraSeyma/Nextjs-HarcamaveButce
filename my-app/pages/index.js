@@ -1,75 +1,57 @@
 "use client";
 
 import React, { useState } from "react";
-import { format, set } from "date-fns";
+import { format } from "date-fns";
 import Link from "next/link";
-import 'tailwindcss/tailwind.css'
+import "tailwindcss/tailwind.css";
+import { useGelirGider } from "../context/GelirGiderContext";
 
 function Home() {
+  const { categories, setCategories, giderData, setGiderData, gelirData, setGelirData } = useGelirGider();
   const [gider, setGider] = useState("");
   const [gelir, setGelir] = useState("");
   const [giderAçıklama, setGiderAçıklama] = useState("");
   const [gelirAçıklama, setGelirAçıklama] = useState("");
-  const [gelirTarih, setGelirTarih] = useState("");
-  const [giderTarih, setGiderTarih] = useState("");
-  const [isGiderDropdownOpen, setIsGiderDropdownOpen] = useState(false);
-  const [isGelirDropdownOpen, setIsGelirDropdownOpen] = useState(false);
   const [giderSelectedCategory, setGiderSelectedCategory] = useState("");
   const [gelirSelectedCategory, setGelirSelectedCategory] = useState("");
-  const [toplamGelir, setToplamGelir] = useState(0);
+  const [giderTarih, setGiderTarih] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [gelirTarih, setGelirTarih] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [isGiderDropdownOpen, setIsGiderDropdownOpen] = useState(false);
+  const toplamGelir = gelirData.reduce((acc, gelir) => acc + gelir.tutar, 0);
 
-  const [categories, setCategories] = useState([
-    { name: "Fatura", color: "bg-red-100 text-red-800", limit: 0, total: 0 },
-    { name: "Kira", color: "bg-blue-100 text-blue-800", limit: 0, total: 0 },
-    {
-      name: "Yemek",
-      color: "bg-yellow-100 text-yellow-800",
-      limit: 0,
-      total: 0,
-    },
-    {
-      name: "Eğlence",
-      color: "bg-purple-100 text-purple-800",
-      limit: 0,
-      total: 0,
-    },
-    {
-      name: "Ulaşım",
-      color: "bg-green-100 text-green-800",
-      limit: 0,
-      total: 0,
-    },
-    { name: "Kıyafet", color: "bg-pink-100 text-pink-800", limit: 0, total: 0 },
-    {
-      name: "Sağlık",
-      color: "bg-indigo-100 text-indigo-800",
-      limit: 0,
-      total: 0,
-    },
-    { name: "Eğitim", color: "bg-teal-100 text-teal-800", limit: 0, total: 0 },
-    { name: "Diğer", color: "bg-gray-100 text-gray-800", limit: 0, total: 0 },
-  ]);
 
-  const currentDate = new Date();
-  const formattedDate = format(currentDate, "dd/MM/yyyy");
-
-  const handleLimitChange = (name, newLimit) => {
+  const handleLimitChange = (categoryName, newLimit) => {
     const updatedCategories = categories.map((category) =>
-      category.name === name
-        ? { ...category, limit: parseFloat(newLimit) || 0 }
-        : category
+      category.name === categoryName ? { ...category, limit: parseFloat(newLimit) || 0 } : category
     );
     setCategories(updatedCategories);
   };
+
 
   const handleGiderCategorySelect = (categoryName) => {
     setGiderSelectedCategory(categoryName);
     setIsGiderDropdownOpen(false);
   };
 
-  const handleGelirCategorySelect = (categoryName) => {
-    setGelirSelectedCategory(categoryName);
-    setIsGelirDropdownOpen(false);
+  const handleAddGelir = () => {
+    if (!gelir || isNaN(gelir)) {
+      alert("Lütfen geçerli bir tutar giriniz.");
+      return;
+    }
+
+    const newGelir = {
+      kategori: gelirSelectedCategory,
+      tutar: parseFloat(gelir),
+      açıklama: gelirAçıklama,
+      tarih: gelirTarih,
+    };
+
+    setGelirData([...gelirData, newGelir]);
+
+    // Formu sıfırla
+    setGelir("");
+    setGelirAçıklama("");
+    setGelirSelectedCategory("");
   };
 
   const handleAddGider = () => {
@@ -78,48 +60,27 @@ function Home() {
       return;
     }
 
-    const updatedCategories = categories.map((category) => {
-      if (category.name === giderSelectedCategory) {
-        const newTotal = category.total + parseFloat(gider);
+    const newGider = {
+      kategori: giderSelectedCategory,
+      tutar: parseFloat(gider),
+      açıklama: giderAçıklama,
+      tarih: giderTarih,
+    };
 
-        // %80'lik limiti aşarsa uyarı göster
-        if (newTotal >= category.limit * 0.8 && newTotal < category.limit) {
-          alert(
-            `${category.name} kategorisi için belirlediğiniz bütçenin %80'ine ulaştınız!`
-          );
-        } else if (newTotal >= category.limit) {
-          alert(
-            `${category.name} kategorisi için belirlediğiniz bütçeyi aştınız!`
-          );
-        }
+    setGiderData([...giderData, newGider]);
 
-        return { ...category, total: newTotal };
-      }
-      return category;
-    });
 
+    const updatedCategories = categories.map((category) =>
+      category.name === giderSelectedCategory
+        ? { ...category, total: category.total + parseFloat(gider) }
+        : category
+    );
     setCategories(updatedCategories);
 
     // Formu sıfırla
     setGider("");
     setGiderAçıklama("");
-    setGiderTarih("");
     setGiderSelectedCategory("");
-  };
-
-  const handleAddGelir = () => {
-    if (!gelir || isNaN(gelir)) {
-      alert("Lütfen geçerli tutar seçin.");
-      return;
-    }
-
-    setToplamGelir(toplamGelir + parseFloat(gelir));
-
-    // Formu sıfırla
-    setGelir("");
-    setGelirAçıklama("");
-    setGelirTarih("");
-    setGelirSelectedCategory("");
   };
 
   return (
