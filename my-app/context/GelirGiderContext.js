@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState } from "react";
 const GelirGiderContext = createContext();
 
 export const GelirGiderProvider = ({ children }) => {
-  const [categories, setCategories] = useState([
+  const [giderCategories, setGiderCategories] = useState([
     { name: "Fatura", color: "bg-red-100 text-red-800", limit: 0, total: 0 },
     { name: "Kira", color: "bg-blue-100 text-blue-800", limit: 0, total: 0 },
     {
@@ -35,18 +35,27 @@ export const GelirGiderProvider = ({ children }) => {
     { name: "Diğer", color: "bg-gray-100 text-gray-800", limit: 0, total: 0 },
   ]);
 
+  const [gelirCategories, setGelirCategories] = useState([
+    { name: "Maaş", color: "bg-red-100 text-red-800", total: 0 },
+    { name: "Kira", color: "bg-blue-100 text-blue-800", total: 0 },
+    { name: "Yatırım", color: "bg-yellow-100 text-yellow-800", total: 0 },
+    { name: "Diğer", color: "bg-gray-100 text-gray-800", total: 0 },
+  ]);
+
   const [giderData, setGiderData] = useState([]);
   const [gelirData, setGelirData] = useState([]);
 
   return (
     <GelirGiderContext.Provider
       value={{
-        categories,
-        setCategories,
+        giderCategories,
+        setGiderCategories,
         giderData,
         setGiderData,
         gelirData,
         setGelirData,
+        gelirCategories,
+        setGelirCategories,
       }}
     >
       {children}

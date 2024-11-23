@@ -26,7 +26,7 @@ ChartJS.register(
   Legend
 );
 
-const ComboChart = ({ categories, gelirData, giderData }) => {
+const ComboChart = ({ giderCategories, giderData }) => {
   const chartRef = useRef(null);
 
   const colorMap = {
@@ -53,11 +53,9 @@ const ComboChart = ({ categories, gelirData, giderData }) => {
   };
 
   useEffect(() => {
-
-    const gelirByMonth = groupDataByMonth(gelirData);
     const giderByMonth = groupDataByMonth(giderData);
 
-    const categoryDataByMonth = categories.map((category) => {
+    const categoryDataByMonth = giderCategories.map((category) => {
       const monthlyTotals = Array(12).fill(0);
       giderData.forEach((gider) => {
         if (gider.kategori === category.name) {
@@ -87,7 +85,7 @@ const ComboChart = ({ categories, gelirData, giderData }) => {
         ],
         datasets: [
   
-          ...categories.map((category, index) => ({
+          ...giderCategories.map((category, index) => ({
             type: "bar",
             label: category.name,
             data: categoryDataByMonth[index],
@@ -118,7 +116,7 @@ const ComboChart = ({ categories, gelirData, giderData }) => {
     });
 
     return () => chart.destroy();
-  }, [categories, gelirData, giderData]);
+  }, [giderCategories, giderData]);
 
   return <canvas ref={chartRef}></canvas>;
 };
