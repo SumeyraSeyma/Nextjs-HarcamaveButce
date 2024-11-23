@@ -1,25 +1,66 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { format } from "date-fns";
+import { format, set } from "date-fns";
 import Link from "next/link";
 import "tailwindcss/tailwind.css";
 import { useGelirGider } from "../context/GelirGiderContext";
 
 function Home() {
-  const { giderCategories, setGiderCategories, giderData, setGiderData, gelirData, setGelirData, gelirCategories, setGelirCategories } = useGelirGider();
+  const {
+    giderCategories,
+    setGiderCategories,
+    giderData,
+    setGiderData,
+    gelirData,
+    setGelirData,
+    gelirCategories,
+    setGelirCategories,
+    limitAsimi,
+    setLimitAsimi,
+  } = useGelirGider();
   const [gider, setGider] = useState("");
   const [gelir, setGelir] = useState("");
   const [giderAçıklama, setGiderAçıklama] = useState("");
   const [gelirAçıklama, setGelirAçıklama] = useState("");
   const [giderSelectedCategory, setGiderSelectedCategory] = useState("");
   const [gelirSelectedCategory, setGelirSelectedCategory] = useState("");
-  const [giderTarih, setGiderTarih] = useState(format(new Date(), "yyyy-MM-dd"));
-  const [gelirTarih, setGelirTarih] = useState(format(new Date(), "yyyy-MM-dd"));
+  const [giderTarih, setGiderTarih] = useState(
+    format(new Date(), "yyyy-MM-dd")
+  );
+  const [gelirTarih, setGelirTarih] = useState(
+    format(new Date(), "yyyy-MM-dd")
+  );
   const [isGiderDropdownOpen, setIsGiderDropdownOpen] = useState(false);
   const [isGelirDropdownOpen, setIsGelirDropdownOpen] = useState(false);
   const toplamGelir = gelirData.reduce((acc, gelir) => acc + gelir.tutar, 0);
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+
+    const storedGiderData = localStorage.getItem("giderData");
+    const storedGelirData = localStorage.getItem("gelirData");
+    const storedLimitAsimi = localStorage.getItem("limitAsimi");
+    const storedGiderCategories = localStorage.getItem("giderCategories");
+    const storedGelirCategories = localStorage.getItem("gelirCategories");
+  
+    if (storedGiderData) setGiderData(JSON.parse(storedGiderData));
+    if (storedGelirData) setGelirData(JSON.parse(storedGelirData));
+    if (storedLimitAsimi) setLimitAsimi(JSON.parse(storedLimitAsimi));
+    if (storedGiderCategories)
+      setGiderCategories(JSON.parse(storedGiderCategories));
+    if (storedGelirCategories)
+      setGelirCategories(JSON.parse(storedGelirCategories));
+  }, []);
+  
+  useEffect(() => {
+
+    localStorage.setItem("giderData", JSON.stringify(giderData));
+    localStorage.setItem("gelirData", JSON.stringify(gelirData));
+    localStorage.setItem("limitAsimi", JSON.stringify(limitAsimi));
+    localStorage.setItem("giderCategories", JSON.stringify(giderCategories));
+    localStorage.setItem("gelirCategories", JSON.stringify(gelirCategories));
+  }, [giderData, gelirData, limitAsimi, giderCategories, gelirCategories]);
 
   useEffect(() => {
     const isDark = localStorage.getItem("theme") === "dark";
@@ -31,14 +72,14 @@ function Home() {
     localStorage.setItem("theme", isDarkMode ? "dark" : "light");
   }, [isDarkMode]);
 
-
   const handleLimitChange = (categoryName, newLimit) => {
     const updatedCategories = giderCategories.map((category) =>
-      category.name === categoryName ? { ...category, limit: parseFloat(newLimit) || 0 } : category
+      category.name === categoryName
+        ? { ...category, limit: parseFloat(newLimit) || 0 }
+        : category
     );
     setGiderCategories(updatedCategories);
   };
-
 
   const handleGiderCategorySelect = (categoryName) => {
     setGiderSelectedCategory(categoryName);
@@ -48,7 +89,7 @@ function Home() {
   const handleGelirCategorySelect = (categoryName) => {
     setGelirSelectedCategory(categoryName);
     setIsGelirDropdownOpen(false);
-  };  
+  };
 
   const handleAddGelir = () => {
     if (!gelir || isNaN(gelir) || !gelirSelectedCategory) {
@@ -93,12 +134,12 @@ function Home() {
 
     setGiderData([...giderData, newGider]);
 
-
     const updatedCategories = giderCategories.map((category) =>
       category.name === giderSelectedCategory
         ? { ...category, total: category.total + parseFloat(gider) }
         : category
     );
+    
     setGiderCategories(updatedCategories);
 
     // Formu sıfırla
@@ -107,27 +148,65 @@ function Home() {
     setGiderSelectedCategory("");
   };
 
+  const [alertShown, setAlertShown] = useState(false);
+
+  useEffect(() => {
+    giderCategories.forEach((category) => {
+      const percentage = Math.round((category.total / category.limit) * 100);
+      if (!alertShown && percentage > 80) {
+        alert(`${category.name} kategorisi limitin %80'ini aştı!`);
+        setAlertShown(true);
+      }
+      if (percentage > 100) {
+        setLimitAsimi((prev) => {
+          const exists = prev.some((item) => item.name === category.name);
+          if (!exists) {
+            return [
+              ...prev,
+              {
+                name: category.name,
+                total: category.total,
+                limit: category.limit,
+              },
+            ];
+          }
+          return prev;
+        });
+      }
+    });
+  }, [giderCategories, alertShown]);
+
+  const renderCategoryDetails = (category) => {
+    if (category.limit > 0 && category.total > 0) {
+      const percentage = Math.round((category.total / category.limit) * 100);
+      return `${category.total} / ${category.limit} (%${percentage})`;
+    }
+    return null;
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 p-6 dark:bg-zinc-950 dark:text-gray-100">
       <div className="container mx-auto max-w-7xl bg-white shadow-lg rounded-lg p-6 dark:bg-zinc-900 dark:text-gray-100 dark:shadow-zinc-900">
-
-      <button
-        onClick={() =>
-          document.documentElement.classList.toggle("dark")
-        }
-        className="px-4 py-2 bg-blue-500 dark:bg-zinc-800 text-white dark:text-white rounded"
-      >
-        Dark Mode
-      </button>
+        <button
+          onClick={() => document.documentElement.classList.toggle("dark")}
+          className="px-4 py-2 bg-blue-500 dark:bg-zinc-800 text-white dark:text-white rounded"
+        >
+          Dark Mode
+        </button>
 
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6 dark:bg-zinc-900 dark:text-indigo-200">
           Gelir ve Gider Takip Uygulaması
         </h1>
         <div className="mb-6 dark:bg-zinc-900 dark:text-gray-100">
-          <h2 className="text-2xl font-bold mb-4 dark:bg-zinc-900 dark:text-zinc-400">Bütçe Limitleri</h2>
+          <h2 className="text-2xl font-bold mb-4 dark:bg-zinc-900 dark:text-zinc-400">
+            Bütçe Limitleri
+          </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 dark:bg-zinc-900 dark:text-gray-300">
             {giderCategories.map((category, index) => (
-              <div key={index} className="flex items-center gap-4 dark:bg-zinc-900 dark:text-gray-300">
+              <div
+                key={index}
+                className="flex items-center gap-4 dark:bg-zinc-900 dark:text-gray-300"
+              >
                 <span
                   className={`w-24 px-3 py-1 text-center rounded-md dark:bg-zinc-800 dark:text-indigo-200 ${category.color}`}
                 >
@@ -144,14 +223,12 @@ function Home() {
                   className="flex-1 border rounded-lg p-2 focus:ring focus:ring-blue-300 dark:bg-zinc-900 dark:text-gray-300 dark:border-gray-700 dark:focus:ring-blue-300"
                   placeholder="Limit Belirle"
                 />
-                <span className="w-32 text-sm text-gray-600 text-right dark:bg-zinc-900 dark:text-gray-300">
-                  {category.total} / {category.limit}{" "}
-                  {category.limit > 0
-                    ? `(%${Math.round(
-                        (category.total / category.limit) * 100
-                      )})`
-                    : ""}
-                </span>
+
+                {renderCategoryDetails(category) && (
+                  <span className="w-32 text-sm text-gray-600 text-right dark:bg-zinc-900 dark:text-gray-300">
+                    {renderCategoryDetails(category)}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -159,7 +236,9 @@ function Home() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 ">
           {/* Gider */}
           <div className="p-4 bg-red-50 rounded-lg shadow-md border border-red-200 dark:bg-zinc-900 dark:text-gray-300 dark:border dark:border-gray-700 dark:shadow-white ">
-            <h2 className="text-2xl font-bold text-red-600 mb-4 dark:text-red-300">Gider</h2>
+            <h2 className="text-2xl font-bold text-red-600 mb-4 dark:text-red-300">
+              Gider
+            </h2>
             {/* Dropdown */}
             <div className="relative">
               <button
@@ -194,7 +273,7 @@ function Home() {
                     <li key={index}>
                       <button
                         onClick={() => handleGiderCategorySelect(category.name)}
-                        className={`flex items-center justify-between w-full text-left px-4 py-2 rounded-md transition-all duration-200 ${category.color} hover:opacity-90 dark:bg-zinc-800 dark:text-cyan-200 dark:hover:bg-zinc-700 dark:border dark:border-gray-700`} 
+                        className={`flex items-center justify-between w-full text-left px-4 py-2 rounded-md transition-all duration-200 ${category.color} hover:opacity-90 dark:bg-zinc-800 dark:text-cyan-200 dark:hover:bg-zinc-700 dark:border dark:border-gray-700`}
                       >
                         <span>{category.name}</span>
                       </button>
@@ -248,12 +327,14 @@ function Home() {
           </div>
           {/* Gelir */}
           <div className="p-4 bg-green-50 rounded-lg shadow-md border border-green-200 dark:bg-zinc-900 dark:text-gray-300 dark:border dark:border-gray-700 dark:shadow-white">
-            <h2 className="text-2xl font-bold text-green-600 mb-4 dark:text-green-200">Gelir</h2>
+            <h2 className="text-2xl font-bold text-green-600 mb-4 dark:text-green-200">
+              Gelir
+            </h2>
             {/* Dropdown */}
             <div className="relative">
               <button
                 onClick={() => setIsGelirDropdownOpen(!isGelirDropdownOpen)}
-                className="text-white bg-cyan-700 hover:bg-cyan-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-zinc-800 dark:text-cyan-200 dark:focus:ring-0 dark:hover:bg-zinc-700 dark:border dark:border-gray-700" 
+                className="text-white bg-cyan-700 hover:bg-cyan-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center inline-flex items-center dark:bg-zinc-800 dark:text-cyan-200 dark:focus:ring-0 dark:hover:bg-zinc-700 dark:border dark:border-gray-700"
                 type="button"
               >
                 {gelirSelectedCategory || "Kategori Seç"}
@@ -284,7 +365,7 @@ function Home() {
                     <li key={index}>
                       <button
                         onClick={() => handleGelirCategorySelect(category.name)}
-                        className={`flex items-center justify-between w-full text-left px-4 py-2 rounded-md transition-all duration-200 ${category.color} hover:opacity-90 dark:bg-zinc-800 dark:text-cyan-200 dark:hover:bg-zinc-700 dark:border dark:border-gray-700`}  
+                        className={`flex items-center justify-between w-full text-left px-4 py-2 rounded-md transition-all duration-200 ${category.color} hover:opacity-90 dark:bg-zinc-800 dark:text-cyan-200 dark:hover:bg-zinc-700 dark:border dark:border-gray-700`}
                       >
                         <span>{category.name}</span>
                       </button>
@@ -340,7 +421,9 @@ function Home() {
         {/* Sonuç */}
         <div className="grid grid-cols-1 ">
           <div className="mt-6 p-4 bg-gray-50 rounded-lg shadow-md border dark:bg-zinc-800 dark:text-zinc-400">
-            <h2 className="text-xl font-bold text-gray-800 mb-4 dark:text-zinc-400">Sonuçlar</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4 dark:text-zinc-400">
+              Sonuçlar
+            </h2>
             <p className="text-lg">
               Toplam Gelir:{" "}
               <span className="font-bold text-green-600">{toplamGelir} TL</span>
@@ -348,7 +431,10 @@ function Home() {
             <p className="text-lg">
               Toplam Gider:{" "}
               <span className="font-bold text-red-600">
-                {giderCategories.reduce((acc, category) => acc + category.total, 0)}{" "}
+                {giderCategories.reduce(
+                  (acc, category) => acc + category.total,
+                  0
+                )}{" "}
                 TL
               </span>
             </p>

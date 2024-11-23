@@ -12,51 +12,58 @@ import {
 
 ChartJS.register(CategoryScale, LinearScale, LineElement, PointElement, Title, Tooltip, Legend);
 
-const TotalLineChart = ({ gelirData, giderData }) => {
+const YearlyTotalChart = ({ gelirData, giderData }) => {
   const chartRef = useRef(null);
 
-  const groupDataByMonth = (data) => {
-    const currentYear = new Date().getFullYear();
 
-    const currentYearData = data.filter(
-      (entry) => new Date(entry.tarih).getFullYear() === currentYear
-    );
+  const groupDataByYear = (data) => {
+    const yearlyTotals = {};
 
-    const monthlyTotals = Array(12).fill(0);
-
-    currentYearData.forEach((entry) => {
-      const monthIndex = new Date(entry.tarih).getMonth();
-      monthlyTotals[monthIndex] += entry.tutar;
+    data.forEach((entry) => {
+      const year = new Date(entry.tarih).getFullYear();
+      if (!yearlyTotals[year]) {
+        yearlyTotals[year] = 0;
+      }
+      yearlyTotals[year] += entry.tutar;
     });
 
-    return monthlyTotals;
+
+    return Object.keys(yearlyTotals)
+      .sort((a, b) => a - b)
+      .map((year) => ({
+        year: parseInt(year),
+        total: yearlyTotals[year],
+      }));
   };
 
   useEffect(() => {
-    const gelirByMonth = groupDataByMonth(gelirData);
-    const giderByMonth = groupDataByMonth(giderData);
+
+    const groupedGelir = groupDataByYear(gelirData);
+    const groupedGider = groupDataByYear(giderData);
+
+    const years = Array.from(
+      new Set([
+        ...groupedGelir.map((item) => item.year),
+        ...groupedGider.map((item) => item.year),
+      ])
+    ).sort((a, b) => a - b);
+
+    const gelirTotals = years.map(
+      (year) => groupedGelir.find((item) => item.year === year)?.total || 0
+    );
+    const giderTotals = years.map(
+      (year) => groupedGider.find((item) => item.year === year)?.total || 0
+    );
+
 
     const chart = new ChartJS(chartRef.current, {
       type: "line",
       data: {
-        labels: [
-          "Ocak",
-          "Şubat",
-          "Mart",
-          "Nisan",
-          "Mayıs",
-          "Haziran",
-          "Temmuz",
-          "Ağustos",
-          "Eylül",
-          "Ekim",
-          "Kasım",
-          "Aralık",
-        ],
+        labels: years, 
         datasets: [
           {
             label: "Toplam Gelir",
-            data: gelirByMonth,
+            data: gelirTotals,
             borderColor: "rgba(75, 192, 192, 1)",
             borderWidth: 2,
             pointBackgroundColor: "rgba(75, 192, 192, 1)",
@@ -65,7 +72,7 @@ const TotalLineChart = ({ gelirData, giderData }) => {
           },
           {
             label: "Toplam Gider",
-            data: giderByMonth,
+            data: giderTotals,
             borderColor: "rgba(255, 99, 132, 1)",
             borderWidth: 2,
             pointBackgroundColor: "rgba(255, 99, 132, 1)",
@@ -82,7 +89,7 @@ const TotalLineChart = ({ gelirData, giderData }) => {
           },
           title: {
             display: true,
-            text: `Aylık Toplam Gelir ve Gider (${new Date().getFullYear()})`,
+            text: "Yıllık Toplam Gelir ve Gider",
           },
         },
         scales: {
@@ -102,4 +109,4 @@ const TotalLineChart = ({ gelirData, giderData }) => {
   return <canvas ref={chartRef}></canvas>;
 };
 
-export default TotalLineChart;
+export default YearlyTotalChart;

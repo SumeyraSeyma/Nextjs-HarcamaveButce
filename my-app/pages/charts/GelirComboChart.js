@@ -52,19 +52,24 @@ const GelirComboChart = ({ gelirCategories, gelirData }) => {
     return monthlyTotals; 
   };
 
-    useEffect(() => {
-    const gelirByMonth = groupDataByMonth(gelirData);
+  const getCurrentYearData = (data) => {
+    const currentYear = new Date().getFullYear();
+    return data.filter((entry) => new Date(entry.tarih).getFullYear() === currentYear);
+  };
 
-    const categoryDataByMonth = gelirCategories.map((category) => {
+    useEffect(() => {
+      const currentYearGelirData = getCurrentYearData(gelirData);
+
+      const categoryDataByMonth = gelirCategories.map((category) => {
         const monthlyTotals = Array(12).fill(0);
-        gelirData.forEach((gelir) => {
-            const monthIndex = new Date(gelir.tarih).getMonth();
-            if (gelir.kategori === category.name) {
+        currentYearGelirData.forEach((gelir) => {
+          const monthIndex = new Date(gelir.tarih).getMonth();
+          if (gelir.kategori === category.name) {
             monthlyTotals[monthIndex] += gelir.tutar;
-            }
+          }
         });
         return monthlyTotals;
-        });
+      });    
 
     const chart = new ChartJS(chartRef.current, {
 
@@ -95,6 +100,15 @@ const GelirComboChart = ({ gelirCategories, gelirData }) => {
           ],
         },
         options: {
+          plugins: {
+            legend: {
+              position: "top",
+            },
+            title: {
+              display: true,
+              text: "Aylık Gelir Dağılımı",
+            },
+          },
           scales: {
             y: {
               beginAtZero: true,

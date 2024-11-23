@@ -52,14 +52,20 @@ const ComboChart = ({ giderCategories, giderData }) => {
     return monthlyTotals; 
   };
 
+  const getCurrentYearData = (data) => {
+    const currentYear = new Date().getFullYear();
+    return data.filter((entry) => new Date(entry.tarih).getFullYear() === currentYear);
+  };
+
   useEffect(() => {
-    const giderByMonth = groupDataByMonth(giderData);
+    const currentYearGiderData = getCurrentYearData(giderData);
+    const giderByMonth = groupDataByMonth(currentYearGiderData);
 
     const categoryDataByMonth = giderCategories.map((category) => {
       const monthlyTotals = Array(12).fill(0);
-      giderData.forEach((gider) => {
+      currentYearGiderData.forEach((gider) => {
+        const monthIndex = new Date(gider.tarih).getMonth();
         if (gider.kategori === category.name) {
-          const monthIndex = new Date(gider.tarih).getMonth();
           monthlyTotals[monthIndex] += gider.tutar;
         }
       });
@@ -101,7 +107,7 @@ const ComboChart = ({ giderCategories, giderData }) => {
           },
           title: {
             display: true,
-            text: "Aylık Gelir ve Gider Dağılımı",
+            text: "Aylık Gider Dağılımı",
           },
         },
         scales: {
