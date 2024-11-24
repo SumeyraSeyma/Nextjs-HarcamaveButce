@@ -128,61 +128,71 @@ const toggleTheme = () => {
       toast.error("Lütfen geçerli bir kategori ve tutar seçin.");
       return;
     }
-
+  
     const newGider = {
       kategori: giderSelectedCategory,
       tutar: parseFloat(gider),
       açıklama: giderAçıklama,
       tarih: giderTarih,
     };
-
+  
+    const selectedCategory = giderCategories.find(
+      (category) => category.name === giderSelectedCategory
+    );
+  
+    if (selectedCategory) {
+      const updatedTotal = selectedCategory.total + parseFloat(gider);
+      const percentage = ((updatedTotal / selectedCategory.limit) * 100).toFixed(2);
+  
+      console.log("Percentage hesaplandı:", percentage); // Kontrol amaçlı
+      console.log("Limit:", selectedCategory.limit, "Total:", updatedTotal);
+  
+      if (selectedCategory.limit > 0) {
+        if (percentage >= 100) {
+          console.log(`%100'ü aşma durumu: ${selectedCategory.name}, Percentage: ${percentage}`);
+          toast.error(`${selectedCategory.name} kategorisi limitin %100'ünü aştı!`);
+  
+          const newLimitAsimiItem = {
+            name: selectedCategory.name,
+            total: updatedTotal,
+            limit: selectedCategory.limit,
+          };
+  
+          setLimitAsimi((prev) => {
+            const exists = prev.some((item) => item.name === selectedCategory.name);
+            if (!exists) {
+              const updatedLimitAsimi = [...prev, newLimitAsimiItem];
+              localStorage.setItem("limitAsimi", JSON.stringify(updatedLimitAsimi));
+              return updatedLimitAsimi;
+            }
+            return prev;
+          });
+        } else if (percentage > 80) {
+          console.log(`%80'i aşma durumu: ${selectedCategory.name}, Percentage: ${percentage}`);
+          toast.warning(`${selectedCategory.name} kategorisi limitin %80'ini aştı!`);
+        }
+      }
+    }
+  
     setGiderData([...giderData, newGider]);
-
+  
     const updatedCategories = giderCategories.map((category) =>
       category.name === giderSelectedCategory
         ? { ...category, total: category.total + parseFloat(gider) }
         : category
     );
-    
+  
     setGiderCategories(updatedCategories);
-
-    // Formu sıfırla
+  
     setGider("");
     setGiderAçıklama("");
     setGiderSelectedCategory("");
   };
+  
+  
 
 
-  useEffect(() => {
-    const warnedCategories = new Set(
-      JSON.parse(localStorage.getItem("warnedCategories")) || []
-    );
-  
-    const newLimitAsimi = []; 
-  
-    giderCategories.forEach((category) => {
-      const percentage = Math.round((category.total / category.limit) * 100);
-  
-      if (percentage > 80 && !warnedCategories.has(category.name)) {
-        toast.error(`${category.name} kategorisi limitin %80'ini aştı!`);
-        warnedCategories.add(category.name); 
-      }
-  
-      if (percentage > 100 && !limitAsimi.some((item) => item.name === category.name)) {
-        newLimitAsimi.push({
-          name: category.name,
-          total: category.total,
-          limit: category.limit,
-        });
-      }
-    });
-  
-    if (newLimitAsimi.length > 0) {
-      setLimitAsimi((prev) => [...prev, ...newLimitAsimi]); 
-    }
-  
-    localStorage.setItem("warnedCategories", JSON.stringify(Array.from(warnedCategories)));
-  }, [giderCategories]);
+
 
   const renderCategoryDetails = (category) => {
     if (category.limit > 0 && category.total > 0) {
@@ -213,7 +223,7 @@ const toggleTheme = () => {
             {giderCategories.map((category, index) => (
               <div
                 key={index}
-                className="flex items-center gap-4 dark:bg-zinc-900 dark:text-gray-300"
+                className="flex flex-wrap items-center gap-4 dark:bg-zinc-900 dark:text-gray-300"
               >
                 <span
                   className={`w-24 px-3 py-1 text-center rounded-md dark:bg-zinc-800 dark:text-indigo-200 ${category.color}`}

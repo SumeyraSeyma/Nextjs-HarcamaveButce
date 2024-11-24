@@ -16,7 +16,7 @@ import { set } from "date-fns";
 function Report() {
   const { gelirData, giderData, giderCategories, gelirCategories, limitAsimi } =
     useGelirGider();
-    const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   useEffect(() => {
     const isDark = localStorage.getItem("theme") === "dark";
@@ -44,32 +44,35 @@ function Report() {
   };
 
   const handleDownloadPDF = async () => {
-    const previousMode = isDarkMode; 
+    const previousMode = isDarkMode;
     setIsDarkMode(false);
 
     await new Promise((resolve) => setTimeout(resolve, 100));
-  
+
     const element = document.getElementById("report-content");
     if (!element) {
       console.error("Element not found: #report-content");
       return;
     }
-  
-    const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#fff" });
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      backgroundColor: "#fff",
+    });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
-  
+
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-  
+
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-  
+
     const imgRatio = imgHeight / imgWidth;
     const scaledImgHeight = pdfWidth * imgRatio;
-  
+
     let currentHeight = 0;
-  
+
     while (currentHeight < imgHeight) {
       const canvasPart = document.createElement("canvas");
       canvasPart.width = canvas.width;
@@ -77,7 +80,7 @@ function Report() {
         imgHeight - currentHeight,
         canvas.width * (pdfHeight / pdfWidth)
       );
-  
+
       const ctx = canvasPart.getContext("2d");
       ctx.drawImage(
         canvas,
@@ -90,7 +93,7 @@ function Report() {
         canvasPart.width,
         canvasPart.height
       );
-  
+
       const partImgData = canvasPart.toDataURL("image/png");
       pdf.addImage(
         partImgData,
@@ -100,19 +103,18 @@ function Report() {
         pdfWidth,
         (canvasPart.height / canvas.width) * pdfWidth
       );
-  
+
       currentHeight += canvasPart.height;
-  
+
       if (currentHeight < imgHeight) {
         pdf.addPage();
       }
     }
-  
+
     pdf.save("GelirGiderRaporu.pdf");
-  
+
     setIsDarkMode(previousMode);
   };
-  
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 dark:bg-zinc-950">
@@ -143,34 +145,70 @@ function Report() {
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6 dark:text-indigo-200">
           Gelir ve Gider Raporu
         </h1>
-        
 
-       
         <ComboChart
           giderCategories={giderCategories}
           gelirData={gelirData}
           giderData={giderData}
         />
-         {/* Gider Verileri */}
-         <div className="mb-6 mt-4">
+        {/* Gider Verileri */}
+        <div className="mb-6 mt-4">
           <h2 className="text-2xl font-bold text-red-600 mb-4 dark:text-red-200">
             Giderler
           </h2>
-          <ul className="list-disc pl-5 dark:text-zinc-400">
-            {giderData.length > 0 ? (
-              giderData.map((gider, index) => (
-                <li key={index} className="mb-2">
-                  <span className="font-bold dark:text-zinc-400">
-                    {gider.kategori}:
-                  </span>{" "}
-                  {gider.tutar} TL - {gider.aciklama} - {gider.tarih}
-                </li>
-              ))
-            ) : (
-              <p>Henüz gider eklenmedi.</p>
-            )}
-          </ul>
+          {giderData.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="table-auto w-full text-left border-collapse border border-gray-300 dark:border-gray-700 dark:text-zinc-400">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-zinc-800">
+                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+                      Kategori
+                    </th>
+                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+                      Tutar (TL)
+                    </th>
+                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+                      Açıklama
+                    </th>
+                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+                      Tarih
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {giderData.map((gider, index) => (
+                    <tr
+                      key={index}
+                      className={`${
+                        index % 2 === 0
+                          ? "bg-gray-50 dark:bg-zinc-900"
+                          : "bg-white dark:bg-zinc-800"
+                      } hover:bg-gray-200 dark:hover:bg-zinc-700`}
+                    >
+                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                        {gider.kategori}
+                      </td>
+                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                        {gider.tutar} TL
+                      </td>
+                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                        {gider.açıklama || "-"}
+                      </td>
+                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                        {gider.tarih}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-600 dark:text-zinc-400">
+              Henüz gider eklenmedi.
+            </p>
+          )}
         </div>
+
         <div>
           {limitAsimi.length > 0 ? (
             <ul className="list-disc pl-5 dark:text-zinc-400">
@@ -199,21 +237,59 @@ function Report() {
           <h2 className="text-2xl font-bold text-green-600 mb-4 dark:text-green-200">
             Gelirler
           </h2>
-          <ul className="list-disc pl-5 dark:text-zinc-400">
-            {gelirData.length > 0 ? (
-              gelirData.map((gelir, index) => (
-                <li key={index} className="mb-2">
-                  <span className="font-bold dark:text-zinc-400">
-                    {gelir.kategori}:
-                  </span>{" "}
-                  {gelir.tutar} TL - {gelir.aciklama} - {gelir.tarih}
-                </li>
-              ))
-            ) : (
-              <p>Henüz gelir eklenmedi.</p>
-            )}
-          </ul>
+          {gelirData.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="table-auto w-full text-left border-collapse border border-gray-300 dark:border-gray-700 dark:text-zinc-400">
+                <thead>
+                  <tr className="bg-gray-100 dark:bg-zinc-800">
+                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+                      Kategori
+                    </th>
+                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+                      Tutar (TL)
+                    </th>
+                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+                      Açıklama
+                    </th>
+                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+                      Tarih
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {gelirData.map((gelir, index) => (
+                    <tr
+                      key={index}
+                      className={`${
+                        index % 2 === 0
+                          ? "bg-gray-50 dark:bg-zinc-900"
+                          : "bg-white dark:bg-zinc-800"
+                      } hover:bg-gray-200 dark:hover:bg-zinc-700`}
+                    >
+                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                        {gelir.kategori}
+                      </td>
+                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                        {gelir.tutar} TL
+                      </td>
+                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                        {gelir.açıklama || "-"}
+                      </td>
+                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                        {gelir.tarih}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="text-gray-600 dark:text-zinc-400">
+              Henüz gelir eklenmedi.
+            </p>
+          )}
         </div>
+
         <TotalLineChart gelirData={gelirData} giderData={giderData} />
         <AnnualTotalChart gelirData={gelirData} giderData={giderData} />
       </div>
