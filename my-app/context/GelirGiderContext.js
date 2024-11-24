@@ -56,22 +56,6 @@ export const GelirGiderProvider = ({ children }) => {
     setGiderData(storedGiderData ? JSON.parse(storedGiderData) : []);
     setGelirData(storedGelirData ? JSON.parse(storedGelirData) : []);
     setLimitAsimi(storedLimitAsimi ? JSON.parse(storedLimitAsimi) : []);
-    setGiderCategories(
-      storedGiderCategories
-        ? JSON.parse(storedGiderCategories)
-        : [
-            { name: "Fatura", color: "bg-red-100 text-red-800", limit: "", total: 0 },
-            { name: "Kira", color: "bg-blue-100 text-blue-800", limit: "", total: 0 },
-          ]
-    );
-    setGelirCategories(
-      storedGelirCategories
-        ? JSON.parse(storedGelirCategories)
-        : [
-            { name: "Maaş", color: "bg-red-100 text-red-800", total: 0 },
-            { name: "Yatırım", color: "bg-yellow-100 text-yellow-800", total: 0 },
-          ]
-    );
   }, []);
 
   useEffect(() => {

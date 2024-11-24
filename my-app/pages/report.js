@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { useEffect, useState } from "react";
 import { useGelirGider } from "../context/GelirGiderContext";
 import ComboChart from "./charts/GiderComboChart";
 import TotalLineChart from "./charts/MonthlyTotalChart";
@@ -10,10 +11,31 @@ import GelirComboChart from "./charts/GelirComboChart";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import AnnualTotalChart from "./charts/AnnualTotalChart";
+import { set } from "date-fns";
 
 function Report() {
   const { gelirData, giderData, giderCategories, gelirCategories, limitAsimi } =
     useGelirGider();
+    const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    const isDark = localStorage.getItem("theme") === "dark";
+    setIsDarkMode(isDark);
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+    if (isDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+  }, [isDarkMode]);
 
   const router = useRouter();
 
@@ -22,27 +44,32 @@ function Report() {
   };
 
   const handleDownloadPDF = async () => {
+    const previousMode = isDarkMode; 
+    setIsDarkMode(false);
+
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  
     const element = document.getElementById("report-content");
     if (!element) {
       console.error("Element not found: #report-content");
       return;
     }
-
-    const canvas = await html2canvas(element, { scale: 2 });
+  
+    const canvas = await html2canvas(element, { scale: 2, backgroundColor: "#fff" });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
-
+  
     const pdfWidth = pdf.internal.pageSize.getWidth();
     const pdfHeight = pdf.internal.pageSize.getHeight();
-
+  
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-
+  
     const imgRatio = imgHeight / imgWidth;
     const scaledImgHeight = pdfWidth * imgRatio;
-
+  
     let currentHeight = 0;
-
+  
     while (currentHeight < imgHeight) {
       const canvasPart = document.createElement("canvas");
       canvasPart.width = canvas.width;
@@ -50,7 +77,7 @@ function Report() {
         imgHeight - currentHeight,
         canvas.width * (pdfHeight / pdfWidth)
       );
-
+  
       const ctx = canvasPart.getContext("2d");
       ctx.drawImage(
         canvas,
@@ -63,7 +90,7 @@ function Report() {
         canvasPart.width,
         canvasPart.height
       );
-
+  
       const partImgData = canvasPart.toDataURL("image/png");
       pdf.addImage(
         partImgData,
@@ -73,16 +100,19 @@ function Report() {
         pdfWidth,
         (canvasPart.height / canvas.width) * pdfWidth
       );
-
+  
       currentHeight += canvasPart.height;
-
+  
       if (currentHeight < imgHeight) {
         pdf.addPage();
       }
     }
-
+  
     pdf.save("GelirGiderRaporu.pdf");
+  
+    setIsDarkMode(previousMode);
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 dark:bg-zinc-950">
@@ -108,7 +138,7 @@ function Report() {
       </button>
       <div
         id="report-content"
-        className="container mx-auto max-w-7xl bg-white shadow-lg rounded-lg p-6 dark:bg-zinc-900 dark:shadow-zinc-900"
+        className="container mx-auto max-w-7xl bg-white shadow-lg rounded-lg p-6 dark:bg-zinc-800 dark:shadow-zinc-600"
       >
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6 dark:text-indigo-200">
           Gelir ve Gider Raporu
@@ -133,7 +163,7 @@ function Report() {
                   <span className="font-bold dark:text-zinc-400">
                     {gider.kategori}:
                   </span>{" "}
-                  {gider.tutar} TL
+                  {gider.tutar} TL - {gider.aciklama} - {gider.tarih}
                 </li>
               ))
             ) : (
@@ -176,7 +206,7 @@ function Report() {
                   <span className="font-bold dark:text-zinc-400">
                     {gelir.kategori}:
                   </span>{" "}
-                  {gelir.tutar} TL
+                  {gelir.tutar} TL - {gelir.aciklama} - {gelir.tarih}
                 </li>
               ))
             ) : (

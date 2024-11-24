@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { format, set } from "date-fns";
 import Link from "next/link";
 import "tailwindcss/tailwind.css";
@@ -51,15 +53,29 @@ useEffect(() => {
   if (limitAsimi) setLimitAsimi(limitAsimi);
 }, []);
 
-  useEffect(() => {
-    const isDark = localStorage.getItem("theme") === "dark";
-    setIsDarkMode(isDark);
-    if (isDark) document.documentElement.classList.add("dark");
-  }, []);
 
-  useEffect(() => {
-    localStorage.setItem("theme", isDarkMode ? "dark" : "light");
-  }, [isDarkMode]);
+useEffect(() => {
+  const isDark = localStorage.getItem("theme") === "dark";
+  setIsDarkMode(isDark);
+  if (isDark) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, []);
+
+useEffect(() => {
+  localStorage.setItem("theme", isDarkMode ? "dark" : "light");
+  if (isDarkMode) {
+    document.documentElement.classList.add("dark");
+  } else {
+    document.documentElement.classList.remove("dark");
+  }
+}, [isDarkMode]);
+
+const toggleTheme = () => {
+  setIsDarkMode((prev) => !prev);
+};
 
   const handleLimitChange = (categoryName, newLimit) => {
     const updatedCategories = giderCategories.map((category) =>
@@ -82,7 +98,7 @@ useEffect(() => {
 
   const handleAddGelir = () => {
     if (!gelir || isNaN(gelir) || !gelirSelectedCategory) {
-      alert("Lütfen geçerli bir tutar giriniz.");
+      toast.error("Lütfen geçerli bir kategori ve tutar seçin.");
       return;
     }
 
@@ -109,7 +125,7 @@ useEffect(() => {
 
   const handleAddGider = () => {
     if (!giderSelectedCategory || !gider || isNaN(gider)) {
-      alert("Lütfen geçerli bir kategori ve tutar seçin.");
+      toast.error("Lütfen geçerli bir kategori ve tutar seçin.");
       return;
     }
 
@@ -136,33 +152,37 @@ useEffect(() => {
     setGiderSelectedCategory("");
   };
 
-  const [alertShown, setAlertShown] = useState(false);
 
   useEffect(() => {
+    const warnedCategories = new Set(
+      JSON.parse(localStorage.getItem("warnedCategories")) || []
+    );
+  
+    const newLimitAsimi = []; 
+  
     giderCategories.forEach((category) => {
       const percentage = Math.round((category.total / category.limit) * 100);
-      if (!alertShown && percentage > 80) {
-        alert(`${category.name} kategorisi limitin %80'ini aştı!`);
-        setAlertShown(true);
+  
+      if (percentage > 80 && !warnedCategories.has(category.name)) {
+        toast.error(`${category.name} kategorisi limitin %80'ini aştı!`);
+        warnedCategories.add(category.name); 
       }
-      if (percentage > 100) {
-        setLimitAsimi((prev) => {
-          const exists = prev.some((item) => item.name === category.name);
-          if (!exists) {
-            return [
-              ...prev,
-              {
-                name: category.name,
-                total: category.total,
-                limit: category.limit,
-              },
-            ];
-          }
-          return prev;
+  
+      if (percentage > 100 && !limitAsimi.some((item) => item.name === category.name)) {
+        newLimitAsimi.push({
+          name: category.name,
+          total: category.total,
+          limit: category.limit,
         });
       }
     });
-  }, [giderCategories, alertShown]);
+  
+    if (newLimitAsimi.length > 0) {
+      setLimitAsimi((prev) => [...prev, ...newLimitAsimi]); 
+    }
+  
+    localStorage.setItem("warnedCategories", JSON.stringify(Array.from(warnedCategories)));
+  }, [giderCategories]);
 
   const renderCategoryDetails = (category) => {
     if (category.limit > 0 && category.total > 0) {
@@ -176,7 +196,7 @@ useEffect(() => {
     <div className="min-h-screen bg-gray-100 p-6 dark:bg-zinc-950 dark:text-gray-100">
       <div className="container mx-auto max-w-7xl bg-white shadow-lg rounded-lg p-6 dark:bg-zinc-900 dark:text-gray-100 dark:shadow-zinc-900">
         <button
-          onClick={() => document.documentElement.classList.toggle("dark")}
+          onClick={toggleTheme}
           className="px-4 py-2 bg-blue-500 dark:bg-zinc-800 text-white dark:text-white rounded"
         >
           Dark Mode
@@ -446,6 +466,7 @@ useEffect(() => {
               </p>
             </Link>
           </div>
+          <ToastContainer />
         </div>
       </div>
     </div>
