@@ -36,31 +36,20 @@ function Home() {
   const toplamGelir = gelirData.reduce((acc, gelir) => acc + gelir.tutar, 0);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  useEffect(() => {
+//Local Storage
 
-    const storedGiderData = localStorage.getItem("giderData");
-    const storedGelirData = localStorage.getItem("gelirData");
-    const storedLimitAsimi = localStorage.getItem("limitAsimi");
-    const storedGiderCategories = localStorage.getItem("giderCategories");
-    const storedGelirCategories = localStorage.getItem("gelirCategories");
-  
-    if (storedGiderData) setGiderData(JSON.parse(storedGiderData));
-    if (storedGelirData) setGelirData(JSON.parse(storedGelirData));
-    if (storedLimitAsimi) setLimitAsimi(JSON.parse(storedLimitAsimi));
-    if (storedGiderCategories)
-      setGiderCategories(JSON.parse(storedGiderCategories));
-    if (storedGelirCategories)
-      setGelirCategories(JSON.parse(storedGelirCategories));
-  }, []);
-  
-  useEffect(() => {
-
-    localStorage.setItem("giderData", JSON.stringify(giderData));
-    localStorage.setItem("gelirData", JSON.stringify(gelirData));
-    localStorage.setItem("limitAsimi", JSON.stringify(limitAsimi));
-    localStorage.setItem("giderCategories", JSON.stringify(giderCategories));
-    localStorage.setItem("gelirCategories", JSON.stringify(gelirCategories));
-  }, [giderData, gelirData, limitAsimi, giderCategories, gelirCategories]);
+useEffect(() => {
+  const gelirCategories = JSON.parse(localStorage.getItem("gelirCategories"));
+  if (gelirCategories) setGelirCategories(gelirCategories);
+  const giderCategories = JSON.parse(localStorage.getItem("giderCategories"));
+  if (giderCategories) setGiderCategories(giderCategories);
+  const gelirData = JSON.parse(localStorage.getItem("gelirData"));
+  if (gelirData) setGelirData(gelirData);
+  const giderData = JSON.parse(localStorage.getItem("giderData"));
+  if (giderData) setGiderData(giderData);
+  const limitAsimi = JSON.parse(localStorage.getItem("limitAsimi"));
+  if (limitAsimi) setLimitAsimi(limitAsimi);
+}, []);
 
   useEffect(() => {
     const isDark = localStorage.getItem("theme") === "dark";
@@ -112,7 +101,6 @@ function Home() {
         : category
     );
     setGelirCategories(updatedCategories);
-
     // Formu sıfırla
     setGelir("");
     setGelirAçıklama("");
