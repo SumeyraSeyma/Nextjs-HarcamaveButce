@@ -106,7 +106,7 @@ const GelirComboChart = ({ gelirCategories, gelirData }) => {
             },
             title: {
               display: true,
-              text: "Aylık Gelir Dağılımı",
+              text: `Aylık Gelir Dağılımı (${new Date().getFullYear()})`,
             },
           },
           scales: {

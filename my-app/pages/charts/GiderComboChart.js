@@ -107,7 +107,7 @@ const ComboChart = ({ giderCategories, giderData }) => {
           },
           title: {
             display: true,
-            text: "Aylık Gider Dağılımı",
+            text: `Aylık Gider Dağılımı (${new Date().getFullYear()})`,
           },
         },
         scales: {

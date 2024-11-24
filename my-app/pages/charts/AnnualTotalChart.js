@@ -89,7 +89,7 @@ const YearlyTotalChart = ({ gelirData, giderData }) => {
           },
           title: {
             display: true,
-            text: "Yıllık Toplam Gelir ve Gider",
+            text: "Yıllık Toplam Gelir ve Gider (Girilen Tüm Yıllar)",
           },
         },
         scales: {

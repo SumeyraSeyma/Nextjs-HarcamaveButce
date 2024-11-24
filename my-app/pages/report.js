@@ -113,29 +113,16 @@ function Report() {
         <h1 className="text-3xl font-bold text-center text-gray-800 mb-6 dark:text-indigo-200">
           Gelir ve Gider Raporu
         </h1>
-        {/* Gelir Verileri */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-green-600 mb-4 dark:text-green-200">
-            Gelirler
-          </h2>
-          <ul className="list-disc pl-5 dark:text-zinc-400">
-            {gelirData.length > 0 ? (
-              gelirData.map((gelir, index) => (
-                <li key={index} className="mb-2">
-                  <span className="font-bold dark:text-zinc-400">
-                    {gelir.kategori}:
-                  </span>{" "}
-                  {gelir.tutar} TL ({gelir.açıklama})
-                </li>
-              ))
-            ) : (
-              <p>Henüz gelir eklenmedi.</p>
-            )}
-          </ul>
-        </div>
+        
 
-        {/* Gider Verileri */}
-        <div className="mb-6">
+       
+        <ComboChart
+          giderCategories={giderCategories}
+          gelirData={gelirData}
+          giderData={giderData}
+        />
+         {/* Gider Verileri */}
+         <div className="mb-6 mt-4">
           <h2 className="text-2xl font-bold text-red-600 mb-4 dark:text-red-200">
             Giderler
           </h2>
@@ -146,7 +133,7 @@ function Report() {
                   <span className="font-bold dark:text-zinc-400">
                     {gider.kategori}:
                   </span>{" "}
-                  {gider.tutar} TL ({gider.açıklama})
+                  {gider.tutar} TL
                 </li>
               ))
             ) : (
@@ -154,11 +141,6 @@ function Report() {
             )}
           </ul>
         </div>
-        <ComboChart
-          giderCategories={giderCategories}
-          gelirData={gelirData}
-          giderData={giderData}
-        />
         <div>
           {limitAsimi.length > 0 ? (
             <ul className="list-disc pl-5 dark:text-zinc-400">
@@ -182,6 +164,26 @@ function Report() {
           gelirCategories={gelirCategories}
           gelirData={gelirData}
         />
+        {/* Gelir Verileri */}
+        <div className="mb-6 mt-4">
+          <h2 className="text-2xl font-bold text-green-600 mb-4 dark:text-green-200">
+            Gelirler
+          </h2>
+          <ul className="list-disc pl-5 dark:text-zinc-400">
+            {gelirData.length > 0 ? (
+              gelirData.map((gelir, index) => (
+                <li key={index} className="mb-2">
+                  <span className="font-bold dark:text-zinc-400">
+                    {gelir.kategori}:
+                  </span>{" "}
+                  {gelir.tutar} TL
+                </li>
+              ))
+            ) : (
+              <p>Henüz gelir eklenmedi.</p>
+            )}
+          </ul>
+        </div>
         <TotalLineChart gelirData={gelirData} giderData={giderData} />
         <AnnualTotalChart gelirData={gelirData} giderData={giderData} />
       </div>
