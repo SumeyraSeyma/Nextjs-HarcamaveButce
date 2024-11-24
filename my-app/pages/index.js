@@ -188,19 +188,29 @@ const toggleTheme = () => {
     setGiderAçıklama("");
     setGiderSelectedCategory("");
   };
-  
-  
-
-
-
 
   const renderCategoryDetails = (category) => {
-    if (category.limit > 0 && category.total > 0) {
-      const percentage = Math.round((category.total / category.limit) * 100);
-      return `${category.total} / ${category.limit} (%${percentage})`;
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth(); 
+    const currentYear = currentDate.getFullYear();
+  
+
+    const currentMonthTotal = giderData
+      .filter(
+        (gider) =>
+          gider.kategori === category.name &&
+          new Date(gider.tarih).getMonth() === currentMonth &&
+          new Date(gider.tarih).getFullYear() === currentYear
+      )
+      .reduce((acc, gider) => acc + gider.tutar, 0);
+  
+    if (category.limit > 0 && currentMonthTotal > 0) {
+      const percentage = Math.round((currentMonthTotal / category.limit) * 100);
+      return `${currentMonthTotal} / ${category.limit} (%${percentage})`;
     }
     return null;
   };
+  
 
   return (
     <div className="min-h-screen bg-gray-100 p-6 dark:bg-zinc-950 dark:text-gray-100">

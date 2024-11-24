@@ -17,6 +17,7 @@ function Report() {
   const { gelirData, giderData, giderCategories, gelirCategories, limitAsimi } =
     useGelirGider();
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     const isDark = localStorage.getItem("theme") === "dark";
@@ -42,6 +43,20 @@ function Report() {
   const handleBack = () => {
     router.back();
   };
+
+  const calculateTotalByCategory = (categories, data) => {
+    return categories.map((category) => {
+      const total = data
+        .filter((item) => item.kategori === category.name)
+        .reduce((acc, item) => acc + item.tutar, 0);
+  
+      return { name: category.name, total };
+    });
+  };
+  
+  const giderTotalByCategory = calculateTotalByCategory(giderCategories, giderData);
+  const gelirTotalByCategory = calculateTotalByCategory(gelirCategories, gelirData);
+  
 
   const handleDownloadPDF = async () => {
     const previousMode = isDarkMode;
@@ -147,67 +162,65 @@ function Report() {
         </h1>
 
         <ComboChart
-          giderCategories={giderCategories}
-          gelirData={gelirData}
-          giderData={giderData}
-        />
+  giderCategories={giderCategories}
+  giderData={giderData.filter(
+    (gider) => new Date(gider.tarih).getFullYear() === currentYear
+  )}
+/>
         {/* Gider Verileri */}
-        <div className="mb-6 mt-4">
-          <h2 className="text-2xl font-bold text-red-600 mb-4 dark:text-red-200">
-            Giderler
-          </h2>
-          {giderData.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table-auto w-full text-left border-collapse border border-gray-300 dark:border-gray-700 dark:text-zinc-400">
-                <thead>
-                  <tr className="bg-gray-100 dark:bg-zinc-800">
-                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
-                      Kategori
-                    </th>
-                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
-                      Tutar (TL)
-                    </th>
-                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
-                      Açıklama
-                    </th>
-                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
-                      Tarih
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {giderData.map((gider, index) => (
-                    <tr
-                      key={index}
-                      className={`${
-                        index % 2 === 0
-                          ? "bg-gray-50 dark:bg-zinc-900"
-                          : "bg-white dark:bg-zinc-800"
-                      } hover:bg-gray-200 dark:hover:bg-zinc-700`}
-                    >
-                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
-                        {gider.kategori}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
-                        {gider.tutar} TL
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
-                        {gider.açıklama || "-"}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
-                        {gider.tarih}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-gray-600 dark:text-zinc-400">
-              Henüz gider eklenmedi.
-            </p>
-          )}
-        </div>
+
+{giderData.length > 0 ? (
+  <div className="overflow-x-auto">
+    <table className="table-auto w-full text-left border-collapse border border-gray-300 dark:border-gray-700 dark:text-zinc-400">
+      <thead>
+        <tr className="bg-gray-100 dark:bg-zinc-800">
+          <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+            Kategori
+          </th>
+          <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+            Tutar (TL)
+          </th>
+          <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+            Açıklama
+          </th>
+          <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+            Tarih
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {giderData
+          .filter((gider) => new Date(gider.tarih).getFullYear() === currentYear)
+          .map((gider, index) => (
+            <tr
+              key={index}
+              className={`${
+                index % 2 === 0
+                  ? "bg-gray-50 dark:bg-zinc-900"
+                  : "bg-white dark:bg-zinc-800"
+              } hover:bg-gray-200 dark:hover:bg-zinc-700`}
+            >
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {gider.kategori}
+              </td>
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {gider.tutar} TL
+              </td>
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {gider.açıklama || "-"}
+              </td>
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {gider.tarih}
+              </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+) : (
+  <p className="text-gray-600 dark:text-zinc-400">Henüz gider eklenmedi.</p>
+)}
+
 
         <div>
           {limitAsimi.length > 0 ? (
@@ -229,69 +242,144 @@ function Report() {
           )}
         </div>
         <GelirComboChart
-          gelirCategories={gelirCategories}
-          gelirData={gelirData}
-        />
+  gelirCategories={gelirCategories}
+  gelirData={gelirData.filter(
+    (gelir) => new Date(gelir.tarih).getFullYear() === currentYear
+  )}
+/>
         {/* Gelir Verileri */}
-        <div className="mb-6 mt-4">
-          <h2 className="text-2xl font-bold text-green-600 mb-4 dark:text-green-200">
-            Gelirler
-          </h2>
-          {gelirData.length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="table-auto w-full text-left border-collapse border border-gray-300 dark:border-gray-700 dark:text-zinc-400">
-                <thead>
-                  <tr className="bg-gray-100 dark:bg-zinc-800">
-                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
-                      Kategori
-                    </th>
-                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
-                      Tutar (TL)
-                    </th>
-                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
-                      Açıklama
-                    </th>
-                    <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
-                      Tarih
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {gelirData.map((gelir, index) => (
-                    <tr
-                      key={index}
-                      className={`${
-                        index % 2 === 0
-                          ? "bg-gray-50 dark:bg-zinc-900"
-                          : "bg-white dark:bg-zinc-800"
-                      } hover:bg-gray-200 dark:hover:bg-zinc-700`}
-                    >
-                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
-                        {gelir.kategori}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
-                        {gelir.tutar} TL
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
-                        {gelir.açıklama || "-"}
-                      </td>
-                      <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
-                        {gelir.tarih}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <p className="text-gray-600 dark:text-zinc-400">
-              Henüz gelir eklenmedi.
-            </p>
-          )}
-        </div>
+        {gelirData.length > 0 ? (
+  <div className="overflow-x-auto">
+    <table className="table-auto w-full text-left border-collapse border border-gray-300 dark:border-gray-700 dark:text-zinc-400">
+      <thead>
+        <tr className="bg-gray-100 dark:bg-zinc-800">
+          <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+            Kategori
+          </th>
+          <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+            Tutar (TL)
+          </th>
+          <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+            Açıklama
+          </th>
+          <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+            Tarih
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {gelirData
+          .filter((gelir) => new Date(gelir.tarih).getFullYear() === currentYear)
+          .map((gelir, index) => (
+            <tr
+              key={index}
+              className={`${
+                index % 2 === 0
+                  ? "bg-gray-50 dark:bg-zinc-900"
+                  : "bg-white dark:bg-zinc-800"
+              } hover:bg-gray-200 dark:hover:bg-zinc-700`}
+            >
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {gelir.kategori}
+              </td>
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {gelir.tutar} TL
+              </td>
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {gelir.açıklama || "-"}
+              </td>
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {gelir.tarih}
+              </td>
+            </tr>
+          ))}
+      </tbody>
+    </table>
+  </div>
+) : (
+  <p className="text-gray-600 dark:text-zinc-400">Henüz gelir eklenmedi.</p>
+)}
+
 
         <TotalLineChart gelirData={gelirData} giderData={giderData} />
         <AnnualTotalChart gelirData={gelirData} giderData={giderData} />
+        <div className="mt-6">
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {/* Gider Tablosu */}
+    <div className="overflow-x-auto">
+      <h3 className="text-xl font-bold text-red-600 mb-2 dark:text-red-300">Giderler</h3>
+      <table className="table-auto w-full text-left border-collapse border border-gray-300 dark:border-gray-700 dark:text-zinc-400">
+        <thead>
+          <tr className="bg-gray-100 dark:bg-zinc-800">
+            <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+              Kategori
+            </th>
+            <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+              Toplam (TL)
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {giderTotalByCategory.map((item, index) => (
+            <tr
+              key={index}
+              className={`${
+                index % 2 === 0
+                  ? "bg-gray-50 dark:bg-zinc-900"
+                  : "bg-white dark:bg-zinc-800"
+              } hover:bg-gray-200 dark:hover:bg-zinc-700`}
+            >
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {item.name}
+              </td>
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {item.total} TL
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {/* Gelir Tablosu */}
+    <div className="overflow-x-auto">
+      <h3 className="text-xl font-bold text-green-600 mb-2 dark:text-green-300">Gelirler</h3>
+      <table className="table-auto w-full text-left border-collapse border border-gray-300 dark:border-gray-700 dark:text-zinc-400">
+        <thead>
+          <tr className="bg-gray-100 dark:bg-zinc-800">
+            <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+              Kategori
+            </th>
+            <th className="px-4 py-2 text-gray-800 font-semibold dark:text-zinc-300">
+              Toplam (TL)
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {gelirTotalByCategory.map((item, index) => (
+            <tr
+              key={index}
+              className={`${
+                index % 2 === 0
+                  ? "bg-gray-50 dark:bg-zinc-900"
+                  : "bg-white dark:bg-zinc-800"
+              } hover:bg-gray-200 dark:hover:bg-zinc-700`}
+            >
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {item.name}
+              </td>
+              <td className="px-4 py-2 border border-gray-300 dark:border-gray-700">
+                {item.total} TL
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
       </div>
       <div className="mt-4 flex justify-center">
         <button
